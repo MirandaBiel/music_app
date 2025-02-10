@@ -1132,6 +1132,13 @@ int main() {
 
                         // Processa o palpite do usuário, indicando se ele acertou ou não
                         evaluate_response(correctBuzzer, userGuess, ssd);
+
+                        test_uart_connection_device1();
+
+                        if(connection_status){
+                            num_BitDogLabs = 2;
+                        }
+
                     }
 
                     if(num_BitDogLabs == 2){
