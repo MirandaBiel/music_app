@@ -41,7 +41,7 @@
 // Variáveis globais
 const float DIVISOR_CLK_PWM = 16.0;   // Divisor de clock para o PWM
 uint16_t wrap_div_buzzer = 8;         // Valor do divisor de wrap do buzzer
-int num_BitDogLabs = 2;               // Número de BitDoglabs conectadas
+int num_BitDogLabs = 1;               // Número de BitDoglabs conectadas
 uint dma_channel;                     // Canal DMA
 dma_channel_config dma_cfg;           // Configuração DMA
 uint16_t adc_buffer[SAMPLES];         // Buffer de audio
@@ -1230,9 +1230,10 @@ int main() {
                     }
 
                     if(num_BitDogLabs == 2){
+
                         uart_putc(uart0, 's');
 
-                        sleep_ms(100);
+                        sleep_ms(1000);
 
                         if (uart_is_readable(uart0)) {
                             // Lê um caractere da UART
