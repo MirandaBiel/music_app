@@ -50,6 +50,8 @@ float diff;                           // Diferença entre a nota musical mais pr
 float frequency;                      // Frequência predominante
 char text[TEXT_LINES][TEXT_LENGTH];   // Variável de texto mostrada no display OLED
 void print_draw_temp(int direction);  // Declara o protótipo de print_draw_temp (para usar antes de escrevê-la)
+void uart_receive_string(uart_inst_t *uart, char *buffer, int max_len);
+int string_to_int(const char *str);
 bool connection_status = false;       // Variável para indicar o status da conexão UART
 
 // Estrutura de dados
@@ -335,6 +337,42 @@ int get_user_guess() {
             sleep_ms(300); // Delay para debounce
         }
     }
+    return guess;
+}
+
+/*
+ * get_user_guess_uart:
+ *   Aguarda até que o usuário forneça um palpite através dos botões (A/B) ou pela UART.
+ *   Se o botão A for pressionado, retorna 0; se o botão B, retorna 1.
+ *   Se um número for recebido pela UART, converte-o e o retorna.
+ */
+int get_user_guess_uart() {
+    int guess = -1;
+    char buffer[16] = {0};  // Buffer para armazenar a string recebida via UART
+
+    while (guess == -1) {
+        // Verifica se o botão A foi pressionado (assumindo lógica ativa em nível baixo)
+        if (!gpio_get(A_BUTTON)) {
+            guess = 0;
+            sleep_ms(300);  // Delay para debounce
+        }
+        // Verifica se o botão B foi pressionado
+        else if (!gpio_get(B_BUTTON)) {
+            guess = 1;
+            sleep_ms(300);  // Delay para debounce
+        }
+        // Verifica se há dados disponíveis na UART
+        else if (uart_is_readable(uart0)) {
+            // Lê uma string da UART
+            uart_receive_string(uart0, buffer, sizeof(buffer));
+            // Se algo foi recebido, converte a string para inteiro
+            if (buffer[0] != '\0') {
+                guess = string_to_int(buffer);
+            }
+        }
+        sleep_ms(10);  // Pequena pausa para reduzir o uso da CPU
+    }
+    
     return guess;
 }
 
@@ -958,6 +996,56 @@ void setup_rbg(){
 
 }
 
+/*
+ * uart_send_string:
+ *   Envia, caractere a caractere, a string fornecida pela UART.
+ * Parâmetros:
+ *   - uart: Instância da UART (por exemplo, uart0).
+ *   - str: Ponteiro para a string a ser enviada.
+ */
+void uart_send_string(uart_inst_t *uart, const char *str) {
+    while (*str) {
+        uart_putc(uart, *str++);
+    }
+}
+
+/*
+ * uart_receive_string:
+ *   Lê caracteres da UART até encontrar um caractere de nova linha ('\n' ou '\r')
+ *   ou até que o buffer esteja quase cheio.
+ * Parâmetros:
+ *   - uart: Instância da UART (por exemplo, uart0).
+ *   - buffer: Buffer onde os caracteres recebidos serão armazenados.
+ *   - max_len: Tamanho máximo do buffer.
+ */
+void uart_receive_string(uart_inst_t *uart, char *buffer, int max_len) {
+    int index = 0;
+    // Limita o número de caracteres a ser armazenado, reservando espaço para o '\0'
+    while (index < max_len - 1) {
+        if (uart_is_readable(uart)) {
+            char c = uart_getc(uart);
+            // Se encontrar fim de linha, interrompe a leitura
+            if (c == '\n' || c == '\r') {
+                break;
+            }
+            buffer[index++] = c;
+        }
+        sleep_ms(1);  // Pequena pausa para reduzir o uso da CPU
+    }
+    buffer[index] = '\0';  // Finaliza a string
+}
+
+/*
+ * string_to_int:
+ *   Converte uma string para um inteiro.
+ * Parâmetros:
+ *   - str: Ponteiro para a string contendo o número.
+ * Retorna:
+ *   O número convertido. (usa atoi da biblioteca padrão)
+ */
+int string_to_int(const char *str) {
+    return atoi(str);
+}
 
 //                                             Função principal
 
