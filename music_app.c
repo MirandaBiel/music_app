@@ -1231,8 +1231,8 @@ int main() {
                     if(num_BitDogLabs == 2){
 
                         gpio_put(RED_PIN, 0);
-                        gpio_put(GREEN_PIN, 0);
-                        
+                        gpio_put(GREEN_PIN, 1);
+
                         printf("num_BitDogLabs == 2");
 
                         uart_putc(uart0, 'a');
