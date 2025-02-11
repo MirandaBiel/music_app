@@ -1106,20 +1106,93 @@ int main() {
                     }
 
                     if(num_BitDogLabs == 2){
-
-                        gpio_put(RED_PIN, 0);
+                        
                         gpio_put(GREEN_PIN, 1);
 
-                        uart_putc(uart0, 'q');
+                        // Escolhe duas notas aleatórias
+                        int idx1 = rand() % NUM_NOTES;
+                        int idx2;
+                        do {
+                            idx2 = rand() % NUM_NOTES;
+                        } while (idx2 == idx1);
 
+                        // Obtém os valores de frequência e os nomes das notas escolhidas
+                        float freq1 = notes[idx1].value;
+                        float freq2 = notes[idx2].value;
+                        const char *note1 = notes[idx1].name;
+                        const char *note2 = notes[idx2].name;
+
+                        // Escolhe a nota que o usuário deverá acertar
+                        int correctBuzzer = rand() % 2;
+
+                        // Mostra no terminal o botão correto (para debugar)
+                        if (correctBuzzer == 0) {
+                            printf("Botao correto: A\n");
+                        } else {
+                            printf("Botao correto: B\n");
+                        }
+
+                        float displayedFreq;
+                        const char *displayedNote;
+                        if (correctBuzzer == 0) {
+                            displayedFreq = freq2;
+                            displayedNote = note2;
+                        } else {
+                            displayedFreq = freq1;
+                            displayedNote = note1;
+                        }
+
+                        // Exibe as informações no display OLED
+                        update_texts_training(displayedFreq, displayedNote);
+                        display_texts(ssd);
                         sleep_ms(500);
 
-                        if (uart_is_readable(uart0)) {
-                            // Lê um caractere da UART
-                            char signal = uart_getc(uart0);
+                        // Chama atenção para a exibição dos sons
+                        print_draw_temp(4);
 
-                            printf("Recebido: %c\n", signal);
+                        // Busca os valores de wrap associados as notas
+                        int wrap1 = 0, wrap2 = 0;
+                        int num_wraps = sizeof(note_wraps) / sizeof(note_wraps[0]);
+                        for (int j = 0; j < num_wraps; j++) {
+                            if (strcmp(note_wraps[j].name, note1) == 0) {
+                                wrap1 = note_wraps[j].value;
+                            }
+                            if (strcmp(note_wraps[j].name, note2) == 0) {
+                                wrap2 = note_wraps[j].value;
+                            }
                         }
+
+                        // Converte os valores para string e os envia via UART
+                        char buffer[16];
+                        snprintf(buffer, sizeof(buffer), "%d", wrap1);
+                        uart_send_string(uart0, buffer);
+                        snprintf(buffer, sizeof(buffer), "%d", wrap2);
+                        uart_send_string(uart0, buffer);
+                        snprintf(buffer, sizeof(buffer), "%d", correctBuzzer);
+                        uart_send_string(uart0, buffer);
+
+                        // Toca a primeira nota no Buzzer A
+                        print_draw_fix(0);
+                        play_note(BUZZER_A, wrap2);
+                        sleep_ms(2000);
+                        play_rest(BUZZER_A);
+                        
+                        // Toca a segunda nota no Buzzer B
+                        print_draw_fix(1);
+                        play_note(BUZZER_B, wrap1);
+                        sleep_ms(2000);
+                        play_rest(BUZZER_B);
+
+                        // Limpa a matriz de LEDs
+                        npClear();
+                        npWrite();
+
+                        // Armazena o palpite do usuário
+                        int userGuess = get_user_guess();
+
+                        // Processa o palpite do usuário, indicando se ele acertou ou não
+                        evaluate_response(correctBuzzer, userGuess, ssd);
+
                     }
 
 
