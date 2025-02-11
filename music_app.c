@@ -52,7 +52,6 @@ char text[TEXT_LINES][TEXT_LENGTH];   // Variável de texto mostrada no display 
 void print_draw_temp(int direction);  // Declara o protótipo de print_draw_temp (para usar antes de escrevê-la)
 void uart_receive_string(uart_inst_t *uart, char *buffer, int max_len);
 int string_to_int(const char *str);
-bool connection_status = false;       // Variável para indicar o status da conexão UART
 
 // Estrutura de dados
 
@@ -402,9 +401,9 @@ void evaluate_response(int correctBuzzer, int userGuess, uint8_t *ssd) {
     // Exibe na matriz de LEDs um padrão de feedback visual
     if (userGuess == correctBuzzer) {
         // Se acertou, mostra padrão “verde”
-        print_draw_temp(correctBuzzer + 4);
-        print_draw_temp(correctBuzzer + 4);
-        print_draw_temp(correctBuzzer + 4);
+        print_draw_temp(correctBuzzer + 2);
+        print_draw_temp(correctBuzzer + 2);
+        print_draw_temp(correctBuzzer + 2);
     } else {
         // Se errou, mostra padrão “vermelho”
         print_draw_temp(correctBuzzer);
@@ -490,38 +489,8 @@ void print_draw_temp(int direction){
             npWrite();
             sleep_ms(500);
             break;
-        // Seta vermelha para diagonal direita (Botão A - BitDogLab 2 - Palpite errado)
-        case 2:
-            npSetLED(4, 100, 0, 0);
-            npSetLED(6, 100, 0, 0);
-            npSetLED(12, 100, 0, 0);
-            npSetLED(18, 100, 0, 0);
-            npSetLED(20, 100, 0, 0);
-            npSetLED(19, 100, 0, 0);
-            npSetLED(10, 100, 0, 0);
-            npSetLED(21, 100, 0, 0);
-            npSetLED(22, 100, 0, 0);
-            sleep_ms(500);
-            npWrite();
-            sleep_ms(500);
-            break;
-        // Seta vermelha para diagonal esquerda (Botão B - BitDogLab 2 - Palpite errado)
-        case 3:
-            npSetLED(24, 100, 0, 0);
-            npSetLED(16, 100, 0, 0);
-            npSetLED(12, 100, 0, 0);
-            npSetLED(8, 100, 0, 0);
-            npSetLED(0, 100, 0, 0);
-            npSetLED(15, 100, 0, 0);
-            npSetLED(14, 100, 0, 0);
-            npSetLED(23, 100, 0, 0);
-            npSetLED(22, 100, 0, 0);
-            sleep_ms(500);
-            npWrite();
-            sleep_ms(500);
-            break;
         // Seta verde para esquerda (Botão A - BitDogLab 1 - Palpite certo)
-        case 4:
+        case 2:
             npSetLED(14, 0, 100, 0);
             npSetLED(13, 0, 100, 0);
             npSetLED(12, 0, 100, 0);
@@ -536,7 +505,7 @@ void print_draw_temp(int direction){
             sleep_ms(500);
             break;
         // Seta verde para direita (Botão B - BitDogLab 1 - Palpite certo)    
-        case 5:
+        case 3:
             npSetLED(14, 0, 100, 0);
             npSetLED(13, 0, 100, 0);
             npSetLED(12, 0, 100, 0);
@@ -550,38 +519,8 @@ void print_draw_temp(int direction){
             npWrite();
             sleep_ms(500);
             break;
-        // Seta verde para diagonal direita (Botão A - BitDogLab 2 - Palpite certo)
-        case 6:
-            npSetLED(4, 0, 100, 0);
-            npSetLED(6, 0, 100, 0);
-            npSetLED(12, 0, 100, 0);
-            npSetLED(18, 0, 100, 0);
-            npSetLED(20, 0, 100, 0);
-            npSetLED(19, 0, 100, 0);
-            npSetLED(10, 0, 100, 0);
-            npSetLED(21, 0, 100, 0);
-            npSetLED(22, 0, 100, 0);
-            sleep_ms(500);
-            npWrite();
-            sleep_ms(500);
-            break;
-        // Seta verde para diagonal esquerda (Botão B - BitDogLab 2 - Palpite certo)
-        case 7:
-            npSetLED(24, 0, 100, 0);
-            npSetLED(16, 0, 100, 0);
-            npSetLED(12, 0, 100, 0);
-            npSetLED(8, 0, 100, 0);
-            npSetLED(0, 0, 100, 0);
-            npSetLED(15, 0, 100, 0);
-            npSetLED(14, 0, 100, 0);
-            npSetLED(23, 0, 100, 0);
-            npSetLED(22, 0, 100, 0);
-            sleep_ms(500);
-            npWrite();
-            sleep_ms(500);
-            break;
         // Chama atenção para começar a emitir o som nos buzzers
-        case 8:
+        case 4:
             // Fase 1
             npSetLED(12, 100, 100, 0);
             sleep_ms(50);
@@ -724,34 +663,6 @@ void print_draw_fix(int direction){
             sleep_ms(200);
             npWrite();
             break;
-        // Seta amarela para diagonal direita (Botão A tocando - BitDogLab 2)
-        case 2:
-            npSetLED(4, 100, 100, 0);
-            npSetLED(6, 100, 100, 0);
-            npSetLED(12, 100, 100, 0);
-            npSetLED(18, 100, 100, 0);
-            npSetLED(20, 100, 100, 0);
-            npSetLED(19, 100, 100, 0);
-            npSetLED(10, 100, 100, 0);
-            npSetLED(21, 100, 100, 0);
-            npSetLED(22, 100, 100, 0);
-            sleep_ms(200);
-            npWrite();
-            break;
-        // Seta amarela para diagonal esquerda (Botão B tocando - BitDogLab 2)    
-        case 3:
-            npSetLED(24, 100, 100, 0);
-            npSetLED(16, 100, 100, 0);
-            npSetLED(12, 100, 100, 0);
-            npSetLED(8, 100, 100, 0);
-            npSetLED(0, 100, 100, 0);
-            npSetLED(15, 100, 100, 0);
-            npSetLED(14, 100, 100, 0);
-            npSetLED(23, 100, 100, 0);
-            npSetLED(22, 100, 100, 0);
-            sleep_ms(200);
-            npWrite();
-            break;
     }
 }
 
@@ -823,15 +734,15 @@ void update_texts_training(float frequency, const char *nota) {
     center_text(text[1], "DA NOTA", TEXT_LENGTH);
 
     center_text(text[2], "", TEXT_LENGTH);
-    
+
     char buffer[TEXT_LENGTH];
-    snprintf(buffer, TEXT_LENGTH, "Freq: %.0f HZ", frequency);
+    snprintf(buffer, TEXT_LENGTH, "Nota: %s", nota);
     center_text(text[3], buffer, TEXT_LENGTH);
 
-    snprintf(buffer, TEXT_LENGTH, "Nota: %s", nota);
-    center_text(text[4], buffer, TEXT_LENGTH);
+    center_text(text[4], "", TEXT_LENGTH);
 
-    center_text(text[5], "", TEXT_LENGTH);
+    snprintf(buffer, TEXT_LENGTH, "Freq: %.0f HZ", frequency);
+    center_text(text[5], buffer, TEXT_LENGTH);
 }
 
 /*
@@ -839,6 +750,10 @@ void update_texts_training(float frequency, const char *nota) {
  *   Exibe cada linha do buffer de texto no display OLED.
  */
 void display_texts(uint8_t *ssd) {
+    
+    memset(ssd, 0, ssd1306_buffer_length);
+    render_on_display(ssd, &frame_area);
+    
     int y = 0;
     for (uint i = 0; i < TEXT_LINES; i++) {
         ssd1306_draw_string(ssd, 5, y, text[i]);  // Desenha a string no display
@@ -856,6 +771,10 @@ void display_texts(uint8_t *ssd) {
  *     - ssd: buffer do display OLED.
  */
 void display_screen(const char screen[][TEXT_LENGTH + 1], unsigned int num_lines, uint8_t *ssd) {
+    
+    memset(ssd, 0, ssd1306_buffer_length);
+    render_on_display(ssd, &frame_area);
+
     char line[TEXT_LENGTH + 1];
     int y = 0;
     for (unsigned int i = 0; i < num_lines; i++) {
@@ -1107,8 +1026,6 @@ int main() {
                         
                         gpio_put(RED_PIN, 1);
 
-                        printf("num_BitDogLabs == 1");
-
                         // Escolhe duas notas aleatórias
                         int idx1 = rand() % NUM_NOTES;
                         int idx2;
@@ -1148,7 +1065,7 @@ int main() {
                         sleep_ms(500);
 
                         // Chama atenção para a exibição dos sons
-                        print_draw_temp(8);
+                        print_draw_temp(4);
 
                         // Busca os valores de wrap associados as notas
                         int wrap1 = 0, wrap2 = 0;
@@ -1186,10 +1103,6 @@ int main() {
 
                         test_uart_connection_device1();
 
-                        if(connection_status){
-                            num_BitDogLabs = 2;
-                        }
-
                     }
 
                     if(num_BitDogLabs == 2){
@@ -1197,11 +1110,9 @@ int main() {
                         gpio_put(RED_PIN, 0);
                         gpio_put(GREEN_PIN, 1);
 
-                        printf("num_BitDogLabs == 2");
-
                         uart_putc(uart0, 'q');
 
-                        sleep_ms(1000);
+                        sleep_ms(500);
 
                         if (uart_is_readable(uart0)) {
                             // Lê um caractere da UART
