@@ -884,8 +884,9 @@ void setup_uart(){
  *   e esperando receber o mesmo caractere em resposta.
  *   Se as 3 trocas forem bem-sucedidas, connection_status é setada para true.
  */
-
 void test_uart_connection_device1() {
+    gpio_put(RED_PIN, 1);
+    gpio_put(GREEN_PIN, 1);
     int success_count = 0;
 
     for (int i = 0; i < 3; i++) {
@@ -901,27 +902,21 @@ void test_uart_connection_device1() {
             // Se o caractere recebido for 's', conta como sucesso
             if (received == 's') {
                 success_count++;
-                gpio_put(GREEN_PIN, 1);
-                gpio_put(RED_PIN, 1);
             }
         }
         
         // Aguarda mais 200 ms antes do próximo teste
         sleep_ms(200);
-        gpio_put(GREEN_PIN, 0);
-        gpio_put(RED_PIN, 0);
     }
     
     // Atualiza o status da conexão: true se todos os testes foram bem-sucedidos
     if(success_count == 3){
         connection_status = true;
-        gpio_put(GREEN_PIN, 1);
-        gpio_put(RED_PIN, 0);
     }else{
-        gpio_put(GREEN_PIN, 0);
-        gpio_put(RED_PIN, 0);
         connection_status = false;
     }
+    gpio_put(GREEN_PIN, 0);
+    gpio_put(RED_PIN, 0);
 }
 
 /*
@@ -1146,6 +1141,10 @@ int main() {
                     // Para o caso de apenas 1 BitDogLab
                     if(num_BitDogLabs == 1){
                         
+                        gpio_put(RED_PIN, 1);
+
+                        printf("num_BitDogLabs == 1");
+
                         // Escolhe duas notas aleatórias
                         int idx1 = rand() % NUM_NOTES;
                         int idx2;
@@ -1231,7 +1230,12 @@ int main() {
 
                     if(num_BitDogLabs == 2){
 
-                        uart_putc(uart0, 's');
+                        gpio_put(RED_PIN, 0);
+                        gpio_put(GREEN_PIN, 0);
+                        
+                        printf("num_BitDogLabs == 2");
+
+                        uart_putc(uart0, 'a');
 
                         sleep_ms(1000);
 
