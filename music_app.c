@@ -50,8 +50,7 @@ float diff;                           // Diferença entre a nota musical mais pr
 float frequency;                      // Frequência predominante
 char text[TEXT_LINES][TEXT_LENGTH];   // Variável de texto mostrada no display OLED
 void print_draw_temp(int direction);  // Declara o protótipo de print_draw_temp (para usar antes de escrevê-la)
-void uart_receive_string(uart_inst_t *uart, char *buffer, int max_len);
-int string_to_int(const char *str);
+
 
 // Estrutura de dados
 
@@ -875,55 +874,30 @@ void setup_rbg(){
 }
 
 /*
- * uart_send_string:
- *   Envia, caractere a caractere, a string fornecida pela UART.
+ * uart_send_uint8_as_char:
+ *   Envia um valor uint8_t (convertido para caractere) via UART.
+ *
  * Parâmetros:
  *   - uart: Instância da UART (por exemplo, uart0).
- *   - str: Ponteiro para a string a ser enviada.
+ *   - value: Valor do tipo uint8_t a ser enviado.
  */
-void uart_send_string(uart_inst_t *uart, const char *str) {
-    while (*str) {
-        uart_putc(uart, *str++);
-    }
+void uart_send_uint8_as_char(uart_inst_t *uart, uint8_t value) {
+    uart_putc(uart, (char)value);
+    sleep_ms(100);
 }
 
 /*
- * uart_receive_string:
- *   Lê caracteres da UART até encontrar um caractere de nova linha ('\n' ou '\r')
- *   ou até que o buffer esteja quase cheio.
- * Parâmetros:
- *   - uart: Instância da UART (por exemplo, uart0).
- *   - buffer: Buffer onde os caracteres recebidos serão armazenados.
- *   - max_len: Tamanho máximo do buffer.
+ * uart_wait_for_char:
+ *   Fica monitorando a UART indefinidamente até que um caractere seja recebido.
+ *   Retorna o caractere recebido (do tipo uint8_t).
  */
-void uart_receive_string(uart_inst_t *uart, char *buffer, int max_len) {
-    int index = 0;
-    // Limita o número de caracteres a ser armazenado, reservando espaço para o '\0'
-    while (index < max_len - 1) {
-        if (uart_is_readable(uart)) {
-            char c = uart_getc(uart);
-            // Se encontrar fim de linha, interrompe a leitura
-            if (c == '\n' || c == '\r') {
-                break;
-            }
-            buffer[index++] = c;
-        }
+uint8_t uart_wait_for_char(uart_inst_t *uart) {
+    while (!uart_is_readable(uart)) {
         sleep_ms(1);  // Pequena pausa para reduzir o uso da CPU
     }
-    buffer[index] = '\0';  // Finaliza a string
+    return uart_getc(uart);
 }
 
-/*
- * string_to_int:
- *   Converte uma string para um inteiro.
- * Parâmetros:
- *   - str: Ponteiro para a string contendo o número.
- * Retorna:
- *   O número convertido. (usa atoi da biblioteca padrão)
- */
-int string_to_int(const char *str) {
-    return atoi(str);
-}
 
 //                                             Função principal
 
@@ -1123,7 +1097,7 @@ int main() {
                         const char *note2 = notes[idx2].name;
 
                         // Escolhe a nota que o usuário deverá acertar
-                        int correctBuzzer = rand() % 2;
+                        uint8_t correctBuzzer = rand() % 2;
 
                         // Mostra no terminal o botão correto (para debugar)
                         if (correctBuzzer == 0) {
@@ -1152,24 +1126,22 @@ int main() {
 
                         // Busca os valores de wrap associados as notas
                         int wrap1 = 0, wrap2 = 0;
+                        uint8_t wrap1_index = 0, wrap2_index = 0;
                         int num_wraps = sizeof(note_wraps) / sizeof(note_wraps[0]);
                         for (int j = 0; j < num_wraps; j++) {
                             if (strcmp(note_wraps[j].name, note1) == 0) {
                                 wrap1 = note_wraps[j].value;
+                                wrap1_index = j;
                             }
                             if (strcmp(note_wraps[j].name, note2) == 0) {
                                 wrap2 = note_wraps[j].value;
+                                wrap2_index = j;
                             }
                         }
 
-                        // Converte os valores para string e os envia via UART
-                        char buffer[16];
-                        snprintf(buffer, sizeof(buffer), "%d", wrap1);
-                        uart_send_string(uart0, buffer);
-                        snprintf(buffer, sizeof(buffer), "%d", wrap2);
-                        uart_send_string(uart0, buffer);
-                        snprintf(buffer, sizeof(buffer), "%d", correctBuzzer);
-                        uart_send_string(uart0, buffer);
+                        uart_send_uint8_as_char(uart0, wrap1_index);
+                        uart_send_uint8_as_char(uart0, wrap2_index);
+                        uart_send_uint8_as_char(uart0, correctBuzzer);
 
                         // Toca a primeira nota no Buzzer A
                         print_draw_fix(0);
