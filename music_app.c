@@ -339,42 +339,6 @@ int get_user_guess() {
 }
 
 /*
- * get_user_guess_uart:
- *   Aguarda até que o usuário forneça um palpite através dos botões (A/B) ou pela UART.
- *   Se o botão A for pressionado, retorna 0; se o botão B, retorna 1.
- *   Se um número for recebido pela UART, converte-o e o retorna.
- */
-int get_user_guess_uart() {
-    int guess = -1;
-    char buffer[16] = {0};  // Buffer para armazenar a string recebida via UART
-
-    while (guess == -1) {
-        // Verifica se o botão A foi pressionado (assumindo lógica ativa em nível baixo)
-        if (!gpio_get(A_BUTTON)) {
-            guess = 0;
-            sleep_ms(300);  // Delay para debounce
-        }
-        // Verifica se o botão B foi pressionado
-        else if (!gpio_get(B_BUTTON)) {
-            guess = 1;
-            sleep_ms(300);  // Delay para debounce
-        }
-        // Verifica se há dados disponíveis na UART
-        else if (uart_is_readable(uart0)) {
-            // Lê uma string da UART
-            uart_receive_string(uart0, buffer, sizeof(buffer));
-            // Se algo foi recebido, converte a string para inteiro
-            if (buffer[0] != '\0') {
-                guess = string_to_int(buffer);
-            }
-        }
-        sleep_ms(10);  // Pequena pausa para reduzir o uso da CPU
-    }
-    
-    return guess;
-}
-
-/*
  * evaluate_response:
  *   Processa o palpite do usuário comparando com o buzzer correto e atualiza o display e os LEDs.
  *   Parâmetros:
