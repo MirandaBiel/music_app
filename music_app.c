@@ -879,98 +879,62 @@ void setup_uart(){
 
 /*
  * test_uart_connection_device1:
- *   Esta função é executada no Dispositivo 1.
- *   Ela realiza 3 trocas, a cada 600 ms, enviando o caractere 's'
- *   e esperando receber o mesmo caractere em resposta.
- *   Se as 3 trocas forem bem-sucedidas, connection_status é setada para true.
+ *   Envia o caractere 's' via UART e espera, por até 500 ms, receber o mesmo caractere de volta.
+ *   Se o caractere for recebido dentro do prazo, incrementa o contador success_count.
+ *   Após cada teste, aguarda 200 ms antes de repetir o processo.
  */
 void test_uart_connection_device1() {
+    // Acende os LEDs para indicar que o teste está em execução.
     gpio_put(RED_PIN, 1);
     gpio_put(GREEN_PIN, 1);
-    int success_count = 0;
 
-    for (int i = 0; i < 3; i++) {
-        // Envia o caractere 's' para o dispositivo 2
-        uart_putc(uart0, 's');
-        
-        // Aguarda 200 ms para permitir a resposta
-        sleep_ms(200);
 
-        // Verifica se há dados disponíveis na UART
+    // Envia o caractere 's' via UART.
+    uart_putc(uart0, 's');
+
+    // Define o prazo para aguardar 500 ms (500000 microsegundos).
+    absolute_time_t deadline = delayed_by_us(get_absolute_time(), 500 * 1000);
+    bool received = false;
+
+    // Aguarda até que o prazo seja alcançado ou o caractere 's' seja recebido.
+    while (!time_reached(deadline)) {
         if (uart_is_readable(uart0)) {
-            char received = uart_getc(uart0);
-            // Se o caractere recebido for 's', conta como sucesso
-            if (received == 's') {
-                success_count++;
+            char received_char = uart_getc(uart0);
+            if (received_char == 's') {
+                received = true;
+                num_BitDogLabs = 2;
+                break;
             }
         }
-        
-        // Aguarda mais 200 ms antes do próximo teste
-        sleep_ms(200);
+        sleep_ms(1); // Pequena pausa para reduzir o uso da CPU.
     }
-    
-    // Atualiza o status da conexão: true se todos os testes foram bem-sucedidos
-    if(success_count == 3){
-        connection_status = true;
-    }else{
-        connection_status = false;
-    }
-    gpio_put(GREEN_PIN, 0);
+
     gpio_put(RED_PIN, 0);
+    gpio_put(GREEN_PIN, 0);
+    
 }
 
 /*
  * test_uart_connection_device2:
- *   Esta função é executada no Dispositivo 2.
- *   Ela aguarda, por até 600 ms, o recebimento do caractere 's' do dispositivo 1.
- *   Se o caractere for recebido, responde enviando 's' e conta como um teste bem-sucedido.
- *   Após 3 testes, connection_status é definida como true se todos tiverem sucesso.
+ *   Fica aguardando indefinidamente a chegada de um caractere pela UART.
+ *   Quando o caractere recebido for 's', a função envia 's' de volta via UART
+ *   e, em seguida, retorna (sai da função).
  */
 void test_uart_connection_device2() {
-    int success_count = 0;
-
-    for (int i = 0; i < 3; i++) {
-        bool received_flag = false;
-
-        // Define o prazo para aguardar 200 ms (200000 microsegundos)
-        absolute_time_t receive_deadline = delayed_by_us(get_absolute_time(), 200 * 1000);
-
-        // Aguarda até que o tempo definido seja atingido ou até receber o caractere 's'
-        while (!time_reached(receive_deadline)) {
-            if (uart_is_readable(uart0)) {
-                char received = uart_getc(uart0);
-                if (received == 's') {
-                    received_flag = true;
-                    break;
-                }
+    while (true) {
+        // Verifica se há dados disponíveis na UART
+        if (uart_is_readable(uart0)) {
+            char received = uart_getc(uart0);
+            // Se o caractere recebido for 's'
+            if (received == 's') {
+                // Envia 's' de volta via UART
+                uart_putc(uart0, 's');
+                // Sai da função
+                return;
             }
-            // Pequena pausa para reduzir o uso da CPU
-            sleep_ms(1);
         }
-
-        // Se o caractere 's' foi recebido, responde enviando 's' e conta como sucesso
-        if (received_flag) {
-            uart_putc(uart0, 's');
-            success_count++;
-        }
-
-        // Aguarda 200 ms antes de iniciar o próximo ciclo de teste
-        absolute_time_t next_cycle_deadline = delayed_by_us(get_absolute_time(), 200 * 1000);
-        while (!time_reached(next_cycle_deadline)) {
-            sleep_ms(1);
-        }
-    }
-
-    // Atualiza o status da conexão: true se os 3 testes foram bem-sucedidos
-    // Atualiza o status da conexão: true se todos os testes foram bem-sucedidos
-    if(success_count == 3){
-        connection_status = true;
-        gpio_put(GREEN_PIN, 1);
-        gpio_put(RED_PIN, 0);
-    }else{
-        gpio_put(GREEN_PIN, 0);
-        gpio_put(RED_PIN, 0);
-        connection_status = false;
+        // Pausa de 1 ms para reduzir o uso da CPU durante a espera
+        sleep_ms(1);
     }
 }
 
