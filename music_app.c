@@ -1235,7 +1235,7 @@ int main() {
 
                         printf("num_BitDogLabs == 2");
 
-                        uart_putc(uart0, 'a');
+                        uart_putc(uart0, 'q');
 
                         sleep_ms(1000);
 
