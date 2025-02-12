@@ -1083,6 +1083,14 @@ int main() {
                         const char *note3 = notes[idx3].name;
                         const char *note4 = notes[idx4].name;
 
+                        // Adicionando printfs para exibir informações no terminal
+                        printf("Notas escolhidas:\n");
+                        printf("1. %s - %.2f Hz (Buzzer B BD 1)\n", note1, freq1);
+                        printf("2. %s - %.2f Hz (Buzzer A BD 1)\n", note2, freq2);
+                        printf("3. %s - %.2f Hz (Buzzer B BD 2)\n", note3, freq3);
+                        printf("4. %s - %.2f Hz (Buzzer A BD 2)\n", note4, freq4);
+                        printf("Nota correta está no Buzzer: %d\n", correctBuzzer);
+
                         float displayedFreq;
                         const char *displayedNote;
                         switch (correctBuzzer)
