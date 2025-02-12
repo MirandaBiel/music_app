@@ -386,9 +386,9 @@ void evaluate_response(int correctBuzzer, int userGuess, uint8_t *ssd) {
 
     // Mostra no display OLED se o usuário acertou ou não
     if (userGuess == correctBuzzer) {
-        ssd1306_draw_string(ssd, 5, 0, "Acertou!");
+        ssd1306_draw_string(ssd, 5, 0, "Acertou");
     } else {
-        ssd1306_draw_string(ssd, 5, 0, "Errou!");
+        ssd1306_draw_string(ssd, 5, 0, "Errou");
     }
     render_on_display(ssd, &frame_area);
 
@@ -1191,6 +1191,60 @@ int main() {
                         uart_wait_for_char(uart0);
 
                         int userGuess = get_user_guess_uart();
+
+                        memset(ssd, 0, ssd1306_buffer_length);
+                        render_on_display(ssd, &frame_area);
+
+                        // (Opcional) Impressão para depuração: mostra os valores de correctBuzzer e userGuess
+                        printf("correctBuzzer: %d \n userGuess: %d.\n", correctBuzzer, userGuess);
+
+                        switch (correctBuzzer)
+                        {
+                        case 0:
+                            if(userGuess == 0){
+                                ssd1306_draw_string(ssd, 5, 0, "Acertou");
+                                render_on_display(ssd, &frame_area);
+                                print_draw_temp(2);
+                                print_draw_temp(2);
+                                print_draw_temp(2);
+                                uart_send_uint8_as_char(uart0, 's');
+                            }else{
+                                ssd1306_draw_string(ssd, 5, 0, "Errou");
+                                render_on_display(ssd, &frame_area);
+                                print_draw_temp(0);
+                                print_draw_temp(0);
+                                print_draw_temp(0);
+                                uart_send_uint8_as_char(uart0, 's');
+                            }
+                            break;
+                        case 1:
+                            if(userGuess == 1){
+                                ssd1306_draw_string(ssd, 5, 0, "Acertou");
+                                render_on_display(ssd, &frame_area);
+                                print_draw_temp(3);
+                                print_draw_temp(3);
+                                print_draw_temp(3);
+                                uart_send_uint8_as_char(uart0, 's');
+                            }else{
+                                ssd1306_draw_string(ssd, 5, 0, "Errou");
+                                render_on_display(ssd, &frame_area);
+                                print_draw_temp(1);
+                                print_draw_temp(1);
+                                print_draw_temp(1);
+                                uart_send_uint8_as_char(uart0, 's');
+                            }
+                            break;
+                        case 2:
+                            sleep_ms(2000);
+                            uart_wait_for_char(uart0);
+                            break;
+                        case 3:
+                            sleep_ms(2000);
+                            uart_wait_for_char(uart0);
+                            break;
+                        default:
+                            break;
+                        }
 
                         // Armazena o palpite do usuário
                         // int userGuess = get_user_guess();
