@@ -1261,6 +1261,7 @@ int main() {
                         tela = 1;
                         tela_showed = 1;
                         display_screen(tela1, 7, ssd);
+                        num_BitDogLabs == 2;
                         break;
                     }
                 }
