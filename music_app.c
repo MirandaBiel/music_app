@@ -1261,8 +1261,11 @@ int main() {
                         tela = 1;
                         tela_showed = 1;
                         display_screen(tela1, 7, ssd);
-                        num_BitDogLabs == 2;
+                        num_BitDogLabs = 1;
+                        uart_send_uint8_as_char(uart0, 0);
                         break;
+                    }else{
+                        uart_send_uint8_as_char(uart0, 1);
                     }
                 }
             }
