@@ -1047,38 +1047,79 @@ int main() {
                         
                         gpio_put(GREEN_PIN, 1);
 
-                        // Escolhe duas notas aleatórias
+                        // Escolhe quatro notas aleatórias, garantindo que sejam distintas
                         int idx1 = rand() % NUM_NOTES;
-                        int idx2;
+                        int idx2, idx3, idx4;
+
                         do {
                             idx2 = rand() % NUM_NOTES;
                         } while (idx2 == idx1);
 
+                        do {
+                            idx3 = rand() % NUM_NOTES;
+                        } while (idx3 == idx1 || idx3 == idx2);
+
+                        do {
+                            idx4 = rand() % NUM_NOTES;
+                        } while (idx4 == idx1 || idx4 == idx2 || idx4 == idx3);
+
+                        // Escolhe aleatoriamente a nota que o usuário deverá acertar (valor entre 0 e 3)
+                        uint8_t correctBuzzer = rand() % 4;
+
+                        uart_send_uint8_as_char(uart0, idx1);
+                        uart_send_uint8_as_char(uart0, idx2);
+                        uart_send_uint8_as_char(uart0, idx3);
+                        uart_send_uint8_as_char(uart0, idx4);
+                        uart_send_uint8_as_char(uart0, correctBuzzer);
+
                         // Obtém os valores de frequência e os nomes das notas escolhidas
                         float freq1 = notes[idx1].value;
                         float freq2 = notes[idx2].value;
+                        float freq3 = notes[idx3].value;
+                        float freq4 = notes[idx4].value;
+
                         const char *note1 = notes[idx1].name;
                         const char *note2 = notes[idx2].name;
-
-                        // Escolhe a nota que o usuário deverá acertar
-                        uint8_t correctBuzzer = rand() % 2;
-
-                        // Mostra no terminal o botão correto (para debugar)
-                        if (correctBuzzer == 0) {
-                            printf("Botao correto: A\n");
-                        } else {
-                            printf("Botao correto: B\n");
-                        }
+                        const char *note3 = notes[idx3].name;
+                        const char *note4 = notes[idx4].name;
 
                         float displayedFreq;
                         const char *displayedNote;
-                        if (correctBuzzer == 0) {
+                        switch (correctBuzzer)
+                        {
+                        case 0:
                             displayedFreq = freq2;
                             displayedNote = note2;
-                        } else {
+                            break;
+                        case 1:
                             displayedFreq = freq1;
                             displayedNote = note1;
+                            break;
+                        case 2:
+                            displayedFreq = freq4;
+                            displayedNote = note4;
+                            break;
+                        case 3:
+                            displayedFreq = freq3;
+                            displayedNote = note3;
+                            break;
+                        default:
+                            break;
                         }
+
+                        // Busca os valores de wrap associados as notas
+                        int wrap1 = 0, wrap2 = 0;
+                        int num_wraps = sizeof(note_wraps) / sizeof(note_wraps[0]);
+                        for (int j = 0; j < num_wraps; j++) {
+                            if (strcmp(note_wraps[j].name, note1) == 0) {
+                                wrap1 = note_wraps[j].value;
+                            }
+                            if (strcmp(note_wraps[j].name, note2) == 0) {
+                                wrap2 = note_wraps[j].value;
+                            }
+                        }
+
+                        uart_send_uint8_as_char(uart0, 's');
 
                         // Exibe as informações no display OLED
                         update_texts_training(displayedFreq, displayedNote);
@@ -1087,25 +1128,6 @@ int main() {
 
                         // Chama atenção para a exibição dos sons
                         print_draw_temp(4);
-
-                        // Busca os valores de wrap associados as notas
-                        int wrap1 = 0, wrap2 = 0;
-                        uint8_t wrap1_index = 0, wrap2_index = 0;
-                        int num_wraps = sizeof(note_wraps) / sizeof(note_wraps[0]);
-                        for (int j = 0; j < num_wraps; j++) {
-                            if (strcmp(note_wraps[j].name, note1) == 0) {
-                                wrap1 = note_wraps[j].value;
-                                wrap1_index = j;
-                            }
-                            if (strcmp(note_wraps[j].name, note2) == 0) {
-                                wrap2 = note_wraps[j].value;
-                                wrap2_index = j;
-                            }
-                        }
-
-                        uart_send_uint8_as_char(uart0, wrap1_index);
-                        uart_send_uint8_as_char(uart0, wrap2_index);
-                        uart_send_uint8_as_char(uart0, correctBuzzer);
 
                         // Toca a primeira nota no Buzzer A
                         print_draw_fix(0);
@@ -1123,11 +1145,17 @@ int main() {
                         npClear();
                         npWrite();
 
+                        uart_send_uint8_as_char(uart0, 's');
+
+                        sleep_ms(3000);
+
+                        uart_wait_for_char(uart0);
+
                         // Armazena o palpite do usuário
-                        int userGuess = get_user_guess();
+                        // int userGuess = get_user_guess();
 
                         // Processa o palpite do usuário, indicando se ele acertou ou não
-                        evaluate_response(correctBuzzer, userGuess, ssd);
+                        // evaluate_response(correctBuzzer, userGuess, ssd);
 
                     }
 
