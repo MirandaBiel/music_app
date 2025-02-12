@@ -32,11 +32,11 @@
 #define JOYSTICK_BUTTON 22                       // Define o pino do botão do joystick.
 #define A_BUTTON 5                               // Define o pino do botão A.
 #define B_BUTTON 6                               // Define o pino do botão B.
-#define UART_TX 0
-#define UART_RX 1
-#define RED_PIN 13
-#define GREEN_PIN 11
-#define BLUE_PIN 12
+#define UART_TX 0                                // Define o pino de transmissão (TX) da UART.
+#define UART_RX 1                                // Define o pino de recepção (RX) da UART.
+#define RED_PIN 13                               // Define o pino do LED vermelho.
+#define GREEN_PIN 11                             // Define o pino do LED verde.
+#define BLUE_PIN 12                              // Define o pino do LED azul.
 
 // Variáveis globais
 const float DIVISOR_CLK_PWM = 16.0;   // Divisor de clock para o PWM
@@ -322,90 +322,96 @@ void play_rest(uint pin)
  *   Retorna 0 se o botão A for pressionado e 1 se o botão B for pressionado.
  */
 int get_user_guess() {
-    int guess = -1;
-    while (guess == -1) {
-        // Verifica se o botão A foi pressionado (botão ativo em nível baixo)
+    int guess = -1; // Inicializa a variável guess com um valor inválido (-1).
+    
+    while (guess == -1) { // Continua verificando até que um botão seja pressionado.
+        // Verifica se o botão A foi pressionado (botão ativo em nível baixo).
         if (!gpio_get(A_BUTTON)) {
-            guess = 0;
-            sleep_ms(300); // Delay para debounce
+            guess = 0;  // Define o palpite como 0 se o botão A foi pressionado.
+            sleep_ms(300); // Pequeno atraso para evitar múltiplas leituras (debounce).
         }
-        // Verifica se o botão B foi pressionado
+        // Verifica se o botão B foi pressionado.
         else if (!gpio_get(B_BUTTON)) {
-            guess = 1;
-            sleep_ms(300); // Delay para debounce
+            guess = 1;  // Define o palpite como 1 se o botão B foi pressionado.
+            sleep_ms(300); // Pequeno atraso para debounce.
         }
     }
-    return guess;
+    return guess; // Retorna o palpite do usuário.
 }
 
+/*
+ * get_user_guess_uart:
+ *   Aguarda até que o usuário pressione um dos botões (A ou B) ou que um caractere seja recebido via UART.
+ *   Retorna 0 se o botão A for pressionado, 1 se o botão B for pressionado.
+ *   Retorna 2 se receber o caractere 'a' via UART e 3 se receber 'b' via UART.
+ */
 int get_user_guess_uart() {
-    int guess = -1;
+    int guess = -1; // Inicializa a variável guess com um valor inválido (-1).
     
-    while (guess == -1) {
-        // Verifica se há dados disponíveis na UART
+    while (guess == -1) { // Continua verificando até que um botão seja pressionado ou um caractere seja recebido.
+        // Verifica se há dados disponíveis na UART.
         if (uart_is_readable(uart0)) {
-            char received = uart_getc(uart0);
+            char received = uart_getc(uart0); // Lê o caractere recebido via UART.
             if (received == 'a') {
-                return 2;
+                return 2; // Retorna 2 se o caractere 'a' foi recebido.
             } else if (received == 'b') {
-                return 3;
+                return 3; // Retorna 3 se o caractere 'b' foi recebido.
             }
         }
 
-        // Verifica se o botão A foi pressionado (botão ativo em nível baixo)
+        // Verifica se o botão A foi pressionado (botão ativo em nível baixo).
         if (!gpio_get(A_BUTTON)) {
-            guess = 0;
-            uart_putc(uart0, 'a');
-            //sleep_ms(300); // Delay para debounce
+            guess = 0; // Define o palpite como 0 se o botão A foi pressionado.
+            uart_putc(uart0, 'a'); // Envia o caractere 'a' via UART para indicar a ação.
+            // sleep_ms(300); // O debounce foi removido, pois a UART já registra o evento.
         }
-        // Verifica se o botão B foi pressionado
+        // Verifica se o botão B foi pressionado.
         else if (!gpio_get(B_BUTTON)) {
-            guess = 1;
-            uart_putc(uart0, 'b');
-            //sleep_ms(300); // Delay para debounce
+            guess = 1; // Define o palpite como 1 se o botão B foi pressionado.
+            uart_putc(uart0, 'b'); // Envia o caractere 'b' via UART para indicar a ação.
+            // sleep_ms(300); // O debounce foi removido, pois a UART já registra o evento.
         }
     }
-
-    return guess;
+    return guess; // Retorna o palpite do usuário.
 }
 
 /*
  * evaluate_response:
  *   Processa o palpite do usuário comparando com o buzzer correto e atualiza o display e os LEDs.
+ *   Só é usada no caso de apenas 1 dispositivo.
  *   Parâmetros:
  *     - correctBuzzer: índice do buzzer que tocou a nota correta (0 ou 1).
- *     - userGuess: palpite do usuário (0 para botão A ou 1 para botão B).
+ *     - userGuess: palpite do usuário (0 para botão A, 1 para botão B).
  *     - ssd: buffer do display OLED.
  */
 void evaluate_response(int correctBuzzer, int userGuess, uint8_t *ssd) {
-    // Limpa o buffer do display
+    // Limpa o buffer do display para garantir que não haja resíduos de informações anteriores.
     memset(ssd, 0, ssd1306_buffer_length);
 
-    // (Opcional) Impressão para depuração: mostra os valores de correctBuzzer e userGuess
+    // (Opcional) Imprime valores para depuração no console.
     printf("correctBuzzer: %d \n userGuess: %d.\n", correctBuzzer, userGuess);
 
-    // Mostra no display OLED se o usuário acertou ou não
+    // Atualiza o display OLED com o resultado do palpite do usuário.
     if (userGuess == correctBuzzer) {
-        ssd1306_draw_string(ssd, 5, 0, "Acertou");
+        ssd1306_draw_string(ssd, 5, 0, "Acertou"); // Exibe "Acertou" se o palpite for correto.
     } else {
-        ssd1306_draw_string(ssd, 5, 0, "Errou");
+        ssd1306_draw_string(ssd, 5, 0, "Errou"); // Exibe "Errou" se o palpite for incorreto.
     }
-    render_on_display(ssd, &frame_area);
+    render_on_display(ssd, &frame_area); // Atualiza o display OLED.
 
-    // Exibe na matriz de LEDs um padrão de feedback visual
+    // Exibe um feedback visual na matriz de LEDs com base na resposta do usuário.
     if (userGuess == correctBuzzer) {
-        // Se acertou, mostra padrão “verde”
+        // Se o usuário acertou, mostra um padrão verde na matriz de LEDs.
         print_draw_temp(correctBuzzer + 2);
         print_draw_temp(correctBuzzer + 2);
         print_draw_temp(correctBuzzer + 2);
     } else {
-        // Se errou, mostra padrão “vermelho”
+        // Se o usuário errou, mostra um padrão vermelho na matriz de LEDs.
         print_draw_temp(correctBuzzer);
         print_draw_temp(correctBuzzer);
         print_draw_temp(correctBuzzer);
     }
 }
-
 
 //                                 Funções associadas ao Joystick e botões:
 
@@ -781,12 +787,18 @@ void display_screen(const char screen[][TEXT_LENGTH + 1], unsigned int num_lines
 
 //                                             Funções relacionadas à comunicação UART
 
-void setup_uart(){
-    uart_init(uart0, 115200); // Inicializa a UART0 com baud rate de 115200
-    gpio_set_function(UART_TX, GPIO_FUNC_UART); // Configura pino 0 como TX
-    gpio_set_function(UART_RX, GPIO_FUNC_UART); // Configura pino 1 como RX
-    
-    // Habilita o FIFO para evitar sobrecarga de buffer
+/*
+ * setup_uart:
+ *   Inicializa a comunicação UART0 com um baud rate de 115200.
+ *   Configura os pinos TX e RX e habilita o FIFO para melhorar a eficiência da transmissão.
+ */
+void setup_uart() {
+    uart_init(uart0, 115200); // Inicializa a UART0 com uma taxa de transmissão de 115200 baud.
+
+    gpio_set_function(UART_TX, GPIO_FUNC_UART); // Configura o pino definido como UART_TX (0) para função UART (transmissão).
+    gpio_set_function(UART_RX, GPIO_FUNC_UART); // Configura o pino definido como UART_RX (1) para função UART (recepção).
+
+    // Habilita o FIFO (First In, First Out) da UART para evitar perda de dados devido ao buffer cheio.
     uart_set_fifo_enabled(uart0, true);
 }
 
@@ -851,21 +863,26 @@ void test_uart_connection_device2() {
     }
 }
 
-
-void setup_rbg(){
-
+/*
+ * setup_rbg:
+ *   Inicializa os pinos dos LED RGB e os configura como saída.
+ *   Define o estado inicial do LED como desligado (0).
+ */
+void setup_rbg() {
+    // Inicializa os pinos dos LEDs RGB
     gpio_init(RED_PIN);
     gpio_init(GREEN_PIN);
     gpio_init(BLUE_PIN);
 
+    // Configura os pinos como saída para controlar os LEDs
     gpio_set_dir(RED_PIN, GPIO_OUT);
     gpio_set_dir(GREEN_PIN, GPIO_OUT);
     gpio_set_dir(BLUE_PIN, GPIO_OUT);
 
-    gpio_put(RED_PIN, 0);   // Configura o estado do LED vermelho
-    gpio_put(GREEN_PIN, 0); // Configura o estado do LED verde
-    gpio_put(BLUE_PIN, 0);  // Configura o estado do LED azul
-
+    // Garante que os LEDs iniciem desligados
+    gpio_put(RED_PIN, 0);   // LED vermelho desligado
+    gpio_put(GREEN_PIN, 0); // LED verde desligado
+    gpio_put(BLUE_PIN, 0);  // LED azul desligado
 }
 
 /*
@@ -933,8 +950,10 @@ int main() {
     bool button_b_pressed;
     bool button_js_pressed;
 
+    // Inicializa a interface de comunicação UART
     setup_uart();
 
+    // Inicializa o LED RGB que irá indicar os status de conexão entre as BitDogLabs
     setup_rbg();
 
     // Loop de execução
@@ -993,6 +1012,7 @@ int main() {
                     // Para o caso de apenas 1 BitDogLab
                     if(num_BitDogLabs == 1){
                         
+                        // Liga o LED RBG na cor vermelha, indicando que apenas 1 BitDogLab está em uso
                         gpio_put(RED_PIN, 1);
 
                         // Escolhe duas notas aleatórias
@@ -1018,6 +1038,7 @@ int main() {
                             printf("Botao correto: B\n");
                         }
 
+                        // Define qual nota e frequência serão mostradas no display OLED
                         float displayedFreq;
                         const char *displayedNote;
                         if (correctBuzzer == 0) {
@@ -1070,18 +1091,19 @@ int main() {
                         // Processa o palpite do usuário, indicando se ele acertou ou não
                         evaluate_response(correctBuzzer, userGuess, ssd);
 
+                        // Testa se há um segundo dispositivo conectado para utilizar mais buzzers
                         test_uart_connection_device1();
-
                     }
 
+                    // Para o caso de 2 BitDogLabs
                     if(num_BitDogLabs == 2){
                         
+                        // Liga o LED RBG na cor verde indicando que a conexão foi bem sucedida
                         gpio_put(GREEN_PIN, 1);
 
                         // Escolhe quatro notas aleatórias, garantindo que sejam distintas
                         int idx1 = rand() % NUM_NOTES;
                         int idx2, idx3, idx4;
-
                         do {
                             idx2 = rand() % NUM_NOTES;
                         } while (idx2 == idx1);
@@ -1097,6 +1119,7 @@ int main() {
                         // Escolhe aleatoriamente a nota que o usuário deverá acertar (valor entre 0 e 3)
                         uint8_t correctBuzzer = rand() % 4;
 
+                        // Envia para o segundo dispositivo os índices correspondentes às notas e o número do buzzer com a nota correta
                         uart_send_uint8_as_char(uart0, idx1);
                         uart_send_uint8_as_char(uart0, idx2);
                         uart_send_uint8_as_char(uart0, idx3);
@@ -1114,7 +1137,7 @@ int main() {
                         const char *note3 = notes[idx3].name;
                         const char *note4 = notes[idx4].name;
 
-                        // Adicionando printfs para exibir informações no terminal
+                        // Adicionando printfs para exibir informações no terminal (debugging)
                         printf("Notas escolhidas:\n");
                         printf("1. %s - %.2f Hz (Buzzer B BD 1)\n", note1, freq1);
                         printf("2. %s - %.2f Hz (Buzzer A BD 1)\n", note2, freq2);
@@ -1122,6 +1145,7 @@ int main() {
                         printf("4. %s - %.2f Hz (Buzzer A BD 2)\n", note4, freq4);
                         printf("Nota correta está no Buzzer: %d\n", correctBuzzer);
 
+                        // Determina qual o valor de frequência e a nota deverão ser mostradas no display com base em correctBuzzer
                         float displayedFreq;
                         const char *displayedNote;
                         switch (correctBuzzer)
@@ -1158,6 +1182,7 @@ int main() {
                             }
                         }
 
+                        // Manda um caractere para a sincronização entre os 2 dispositivos
                         uart_send_uint8_as_char(uart0, 's');
 
                         // Exibe as informações no display OLED
@@ -1184,20 +1209,26 @@ int main() {
                         npClear();
                         npWrite();
 
+                        // Manda um caractere para a sincronização entre os 2 dispositivos
                         uart_send_uint8_as_char(uart0, 's');
 
+                        // Aguarda o segundo dispositivo tocar os buzzers
                         sleep_ms(3000);
 
+                        // Aguarda um sinal de sincronização indicando que o segundo dispositivo tocou os buzzers
                         uart_wait_for_char(uart0);
 
+                        // Obtém o palpite do usuário sobre qual buzzer tocou a nota certa
                         int userGuess = get_user_guess_uart();
 
+                        // Apaga o conteúdo mostrado no display OLED
                         memset(ssd, 0, ssd1306_buffer_length);
                         render_on_display(ssd, &frame_area);
 
                         // (Opcional) Impressão para depuração: mostra os valores de correctBuzzer e userGuess
                         printf("correctBuzzer: %d \n userGuess: %d.\n", correctBuzzer, userGuess);
 
+                        // Analisa e mostra se o usuário acertou ou não por meio do display OLED e da matriz de LEDs
                         switch (correctBuzzer)
                         {
                         case 0:
@@ -1245,13 +1276,6 @@ int main() {
                         default:
                             break;
                         }
-
-                        // Armazena o palpite do usuário
-                        // int userGuess = get_user_guess();
-
-                        // Processa o palpite do usuário, indicando se ele acertou ou não
-                        // evaluate_response(correctBuzzer, userGuess, ssd);
-
                     }
 
 
@@ -1262,9 +1286,11 @@ int main() {
                         tela_showed = 1;
                         display_screen(tela1, 7, ssd);
                         num_BitDogLabs = 1;
+                        // Solicita ao segundo dispositivo para desfazer a conexão
                         uart_send_uint8_as_char(uart0, 0);
                         break;
                     }else{
+                        // Solicita ao segundo dispositivo para manter a conexão
                         uart_send_uint8_as_char(uart0, 1);
                     }
                 }
