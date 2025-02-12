@@ -354,13 +354,13 @@ int get_user_guess_uart() {
 
         // Verifica se o botão A foi pressionado (botão ativo em nível baixo)
         if (!gpio_get(A_BUTTON)) {
-            guess = 2;
+            guess = 0;
             uart_putc(uart0, 'a');
             //sleep_ms(300); // Delay para debounce
         }
         // Verifica se o botão B foi pressionado
         else if (!gpio_get(B_BUTTON)) {
-            guess = 3;
+            guess = 1;
             uart_putc(uart0, 'b');
             //sleep_ms(300); // Delay para debounce
         }
